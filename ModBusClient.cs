@@ -9,14 +9,62 @@ namespace ModBus
 	{
 		private ushort transactionIdentifier = 0;
 		private ushort protocolIdentifier = 0;
+		private TcpClient tcpClient;
+		private SerialPort serialPort;
 
+		public string SerialPortName;
+		public int BaudRate;
+		public Parity Parity;
+		public int DataBits;
+		public StopBits StopBits;
+		public string IPAddress;
+		public ushort Port;
 		public bool IsDebug = false;
-		/// <summary>
-		/// ModBus Identifier of the modbus server. The default value is 1.
-		/// </summary>
 		public byte ServerID = 1;
+		public ModBusMode Mode;
 
+		public enum ModBusMode
+		{
+			RTU = 0,
+			TCP = 1
+		}
 
+		/// <summary>
+		/// Creates a new instance of the ModBusClient and sets the default parameters.
+		/// The default values are: BaudRate = 19200, Parity = None, DataBits = 8, StopBits = One.
+		/// It also sets the Mode of the client to RTU.
+		/// </summary>
+		/// <param name="SerialPortName">Serial port name.</param>
+		public ModBusClient(string SerialPortName)
+		{
+			this.SerialPortName = SerialPortName;
+			this.BaudRate = 19200;
+			this.Parity = Parity.None;
+			this.DataBits = 8;
+			this.StopBits = StopBits.One;
+			this.Mode = ModBusMode.RTU;
+		}
+
+		/// <summary>
+		/// Creates a new instance of the ModBusClient.
+		/// If no Port is provided the default (502) is set.
+		/// It also sets the Mode of the client to TCP.
+		/// </summary>
+		/// <param name="IPAddress">IP Address.</param>
+		/// <param name="Port">Port.</param>
+		public ModBusClient(string IPAddress, ushort Port = 502)
+		{
+			this.IPAddress = IPAddress;
+			this.Port = Port;
+			this.Mode = ModBusMode.TCP;
+		}
+
+		/// <summary>
+		/// Builds the message used for serial transmission.
+		/// </summary>
+		/// <returns>Message</returns>
+		/// <param name="Data">Data</param>
+		/// <param name="CRC">CRC</param>
 		private byte[] BuildMessageForSerial(byte[] Data, byte[] CRC)
 		{
 			byte[] _message = new byte[1 + Data.Length + CRC.Length];
@@ -28,6 +76,11 @@ namespace ModBus
 			return _message;
 		}
 
+		/// <summary>
+		/// Builds the message used for TCP transmission.
+		/// </summary>
+		/// <returns>Message</returns>
+		/// <param name="Data">Data</param>
 		private byte[] BuildMessageForTcp(byte[] Data) 
 		{
 			byte[] _message = new byte[7 + Data.Length];
@@ -48,6 +101,12 @@ namespace ModBus
 			return _message;
 		}
 
+		/// <summary>
+		/// Reads coils from the remote device.
+		/// </summary>
+		/// <returns>The coils.</returns>
+		/// <param name="StartingAddress">Starting address</param>
+		/// <param name="QuantityOfCoils">Quantity of coils to read, starting from the starting address</param>
 		public byte[] ReadCoils(ushort StartingAddress, ushort QuantityOfCoils) 
 		{
 			if (StartingAddress < 0x0000 | StartingAddress > 0xFFFF)
@@ -99,6 +158,12 @@ namespace ModBus
 			return null;
 		}
 
+		/// <summary>
+		/// Reads Discrete Inputs from the device.
+		/// </summary>
+		/// <returns>The discrete inputs.</returns>
+		/// <param name="StartingAddress">Starting address</param>
+		/// <param name="QuantityOfInputs">Quantity of inputs to read, starting from the starting address</param>
 		public byte[] ReadDiscreteInputs(ushort StartingAddress, ushort QuantityOfInputs)
 		{
 			if (StartingAddress < 0x0000 | StartingAddress > 0xFFFF)
@@ -149,6 +214,12 @@ namespace ModBus
 			return null;
 		}
 
+		/// <summary>
+		/// Reads the holding registers from the remote device.
+		/// </summary>
+		/// <returns>The holding registers.</returns>
+		/// <param name="StartingAddress">Starting address</param>
+		/// <param name="QuantityOfRegisters">Quantity of registers to read, starting from the starting address</param>
 		public byte[] ReadHoldingRegisters(ushort StartingAddress, ushort QuantityOfRegisters)
 		{
 			if (StartingAddress < 0x0000 | StartingAddress > 0xFFFF)
@@ -197,6 +268,12 @@ namespace ModBus
 			return null;
 		}
 
+		/// <summary>
+		/// Reads the input registers from the remote device
+		/// </summary>
+		/// <returns>The input registers.</returns>
+		/// <param name="StartingAddress">Starting address</param>
+		/// <param name="QuantityOfRegisters">Quantity of registers to read, starting from the starting address</param>
 		public byte[] ReadInputRegisters(ushort StartingAddress, ushort QuantityOfRegisters)
 		{
 			if (StartingAddress < 0x0000 | StartingAddress > 0xFFFF)
